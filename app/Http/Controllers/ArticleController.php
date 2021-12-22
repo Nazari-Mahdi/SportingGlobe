@@ -4,23 +4,19 @@ namespace App\Http\Controllers;
 
 use App\Models\Article;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
-
+use App\Models\User;
 class ArticleController extends Controller
 {
 
 
     public function index(){
 
-        $articles = Article::all();
+        $articles = Article::paginate(5);
 
         return view('welcome', compact('articles'));
 
-//        <!-- JSON -->
-
-//        return response()->json([
-//            "Articles" => $articles
-//        ]);
     }
 
 
@@ -30,33 +26,25 @@ class ArticleController extends Controller
     }
 
 
-    public function store(Request $request, Article $article){
-
-
+    public function store(Request $request){
 
         $inputs = request()->validate([
             'title' => 'required|max:255',
-            'image'=> 'file',
+            'image' => 'file',
             'description' => 'required'
         ]);
 
-
         $inputs['image'] = $request['image']->store('images');
 
+        if (Auth::check()) {
+            $inputs['user_id'] = Auth::id();
+        }
 
-        $article->create($inputs);
+        Article::create($inputs);
+
         Session::flash('success' , 'Article has been created successfully');
 
         return redirect('/');
-
-
-        //        <!-- JSON -->
-
-//        return response()->json([
-//            'title' => $article['title'],
-//            'image' => $article['image'],
-//            'description' => $article['description']
-//        ]);
 
     }
 
@@ -65,13 +53,6 @@ class ArticleController extends Controller
 
         return view('article.show',compact('article'));
 
-        //        <!-- JSON -->
-
-        //        return response()->json([
-//            'title' => $article['title'],
-//            'image' => $article['image'],
-//            'description' => $article['description']
-//        ]);
     }
 
 
@@ -79,13 +60,6 @@ class ArticleController extends Controller
 
         return view('article.create', compact('article'));
 
-        //        <!-- JSON -->
-
-        //        return response()->json([
-//            'title' => $article['title'],
-//            'image' => $article['image'],
-//            'description' => $article['description']
-//        ]);
     }
 
 
@@ -93,13 +67,13 @@ class ArticleController extends Controller
 
         $inputs = $request->validate([
             'title' => 'required',
-            'image' => 'file',
+            'image' => 'mimes:svg,jpeg,jpg,png,gif',
             'description' => 'required'
         ]);
 
         if ($request->has('image')){
-            $inputs['image'] = $request['post_image']->store('images');
-            $article['image'] = $inputs['post_image'];
+            $inputs['image'] = $request['image']->store('images');
+            $article['image'] = $inputs['image'];
         }
 
         $article->update($inputs);
@@ -107,15 +81,6 @@ class ArticleController extends Controller
         Session::flash('success' , 'Article has been update successfully');
 
         return redirect('/');
-
-//        <!-- JSON -->
-
-        //        return response()->json([
-//            'title' => $article['title'],
-//            'image' => $article['image'],
-//            'description' => $article['description']
-//        ]);
-
 
     }
 
